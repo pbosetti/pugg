@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1...3.27)
 
 project(
   puggSuite
-  VERSION 1.0.2
+  VERSION 1.0.3
   LANGUAGES CXX)
 
 add_subdirectory(./src/pugg)
