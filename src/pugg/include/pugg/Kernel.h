@@ -24,7 +24,9 @@ class Kernel
 public:
   void add_server(std::string name, int min_driver_version)
   {
-    _servers[name] = pugg::detail::Server{name, min_driver_version};
+    _servers[name] = pugg::detail::Server();
+    _servers[name].name = name;
+    _servers[name].min_driver_version = min_driver_version;
   }
 
   template <class T>
