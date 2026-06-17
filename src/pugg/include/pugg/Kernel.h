@@ -114,8 +114,8 @@ public:
   }
 
 protected:
-  std::map<std::string, pugg::detail::Server> _servers;
   std::vector<pugg::detail::DllHandle> _plugins;
+  std::map<std::string, pugg::detail::Server> _servers;
 };
 
 } // namespace pugg
