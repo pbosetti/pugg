@@ -11,6 +11,6 @@
 
 extern "C" EXPORTIT void register_pugg_plugin(pugg::Kernel *kernel)
 {
-  kernel->add_driver(new CatDriver());
-  kernel->add_driver(new DogDriver());
+  (void)kernel->add_driver(std::make_unique<CatDriver>());
+  (void)kernel->add_driver(std::make_unique<DogDriver>());
 }

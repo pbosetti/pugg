@@ -1,48 +1,43 @@
 #include <Animal.h>
 #include <pugg/Kernel.h>
 
-#include <cstdio>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
-using namespace std;
-
 int main()
 {
-  cout << "Zoo example" << endl;
-  cout << "Zoo loads animals from plugins" << endl;
-  cout << "Loading plugins..." << endl;
+  std::cout << "Zoo example\n";
+  std::cout << "Loading plugins...\n";
 
   pugg::Kernel kernel;
-  kernel.add_server(Animal::server_name(), Animal::version);
+  kernel.add_server<Animal>();
 
-#ifdef WIN32
-#define DLL_PANTHALASSA_ANIMALS "PanthalassaAnimals.dll"
-#define DLL_PANGEA_ANIMALS "PangeaAnimals.dll"
+#ifdef _WIN32
+  constexpr auto DLL_PANTHALASSA = "PanthalassaAnimals.dll";
+  constexpr auto DLL_PANGEA      = "PangeaAnimals.dll";
 #else
-#define DLL_PANTHALASSA_ANIMALS "libPanthalassaAnimals.so"
-#define DLL_PANGEA_ANIMALS "libPangeaAnimals.so"
+  constexpr auto DLL_PANTHALASSA = "libPanthalassaAnimals.so";
+  constexpr auto DLL_PANGEA      = "libPangeaAnimals.so";
 #endif
 
-  kernel.load_plugin(DLL_PANTHALASSA_ANIMALS);
-  kernel.load_plugin(DLL_PANGEA_ANIMALS);
+  if (!kernel.load_plugin(DLL_PANTHALASSA))
+    std::cerr << "Warning: failed to load " << DLL_PANTHALASSA << "\n";
+  if (!kernel.load_plugin(DLL_PANGEA))
+    std::cerr << "Warning: failed to load " << DLL_PANGEA << "\n";
 
-  auto driver = kernel.get_driver<AnimalDriver>(Animal::server_name(), "DogDriver");
-  cout << "driver = " << driver->name();
-  vector<AnimalDriver *> drivers = kernel.get_all_drivers<AnimalDriver>(Animal::server_name());
-  vector<std::unique_ptr<Animal>> animals;
-  for (auto&& driver: drivers)
-  {
+  if (auto *driver = kernel.get_driver<AnimalDriver>(Animal::server_name(), "DogDriver"))
+    std::cout << "Found driver: " << driver->name() << "\n";
+
+  auto drivers = kernel.get_all_drivers<AnimalDriver>(Animal::server_name());
+  std::vector<std::unique_ptr<Animal>> animals;
+  for (auto *driver : drivers)
     animals.push_back(std::unique_ptr<Animal>(driver->create()));
-  }
 
-  for (auto&& animal : animals)
-  {
-    cout << "Animal kind = " << animal->kind() << endl;
-    cout << "Can Animal Swim = " << animal->can_swim() << endl;
-  }
+  for (auto &animal : animals)
+    std::cout << "  " << animal->kind() << " (can swim: " << std::boolalpha << animal->can_swim() << ")\n";
 
-  cout << "Press ENTER to exit..." << endl;
-  getchar();
+  std::cout << "Press ENTER to exit...\n";
+  std::cin.get();
 }

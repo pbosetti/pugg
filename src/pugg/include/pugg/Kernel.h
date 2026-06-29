@@ -1,5 +1,7 @@
 #pragma once
 #include <map>
+#include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -14,9 +16,10 @@ namespace detail
 struct Server
 {
   std::string name;
-  int min_driver_version;
+  int min_driver_version{0};
   std::map<std::string, std::unique_ptr<Driver>> drivers;
 };
+
 } // namespace detail
 
 class Kernel
@@ -24,9 +27,10 @@ class Kernel
 public:
   void add_server(std::string name, int min_driver_version)
   {
-    _servers[name] = pugg::detail::Server();
-    _servers[name].name = name;
-    _servers[name].min_driver_version = min_driver_version;
+    detail::Server server;
+    server.name = name;
+    server.min_driver_version = min_driver_version;
+    _servers[std::move(name)] = std::move(server);
   }
 
   template <class T>
@@ -35,24 +39,31 @@ public:
     add_server(T::server_name(), T::version);
   }
 
-  bool add_driver(pugg::Driver *driver)
+  // Takes ownership of driver; returns false (and deletes driver) if it cannot be registered.
+  [[nodiscard]] bool add_driver(std::unique_ptr<Driver> driver)
   {
     if (!driver)
       return false;
 
     auto server_iter = _servers.find(driver->server_name());
-
     if (server_iter == _servers.end())
       return false;
 
     if (server_iter->second.min_driver_version > driver->version())
       return false;
 
-    server_iter->second.drivers[driver->name()] = std::unique_ptr<pugg::Driver>(driver);
+    server_iter->second.drivers[driver->name()] = std::move(driver);
     return true;
   }
 
-  template <class DriverType> DriverType *get_driver(const std::string &server_name, const std::string &name)
+  // Raw-pointer overload for backwards compatibility: takes ownership of driver.
+  [[nodiscard]] bool add_driver(Driver *driver)
+  {
+    return add_driver(std::unique_ptr<Driver>(driver));
+  }
+
+  template <class DriverType>
+  [[nodiscard]] DriverType *get_driver(const std::string &server_name, const std::string &name)
   {
     auto server_iter = _servers.find(server_name);
     if (server_iter == _servers.end())
@@ -61,10 +72,12 @@ public:
     auto driver_iter = server_iter->second.drivers.find(name);
     if (driver_iter == server_iter->second.drivers.end())
       return nullptr;
-    return static_cast<DriverType *>(driver_iter->second.get());
+
+    return dynamic_cast<DriverType *>(driver_iter->second.get());
   }
 
-  template <class DriverType> std::vector<DriverType *> get_all_drivers(const std::string &server_name)
+  template <class DriverType>
+  [[nodiscard]] std::vector<DriverType *> get_all_drivers(const std::string &server_name)
   {
     std::vector<DriverType *> drivers;
 
@@ -72,23 +85,23 @@ public:
     if (server_iter == _servers.end())
       return drivers;
 
-    for (auto iter = server_iter->second.drivers.begin(); iter != server_iter->second.drivers.end(); ++iter)
+    for (auto &[key, driver_ptr] : server_iter->second.drivers)
     {
-      drivers.push_back(static_cast<DriverType *>(iter->second.get()));
+      if (auto *typed = dynamic_cast<DriverType *>(driver_ptr.get()))
+        drivers.push_back(typed);
     }
     return drivers;
   }
 
-  bool load_plugin(const std::string &filename)
+  [[nodiscard]] bool load_plugin(const std::string &filename)
   {
-    typedef void fnRegisterPlugin(pugg::Kernel *);
+    using fnRegisterPlugin = void(pugg::Kernel *);
 
-    using namespace pugg::detail;
-    auto dllHandle = DllHandle{loadDll(filename)};
+    auto dllHandle = detail::DllHandle{detail::loadDll(filename)};
     if (!dllHandle.isValid())
       return false;
 
-    auto registerFunc = dllHandle.getFunction<fnRegisterPlugin>("register_pugg_plugin");
+    auto *registerFunc = dllHandle.getFunction<fnRegisterPlugin>("register_pugg_plugin");
     if (registerFunc)
     {
       registerFunc(this);
@@ -101,21 +114,24 @@ public:
 
   void clear_drivers()
   {
-    for (auto iter = _servers.begin(); iter != _servers.end(); ++iter)
-    {
-      iter->second.drivers.clear();
-    }
+    for (auto &[name, server] : _servers)
+      server.drivers.clear();
   }
 
   void clear()
   {
+    // Destroy Driver objects before unloading DLLs — member destruction
+    // order (reverse of declaration) ensures _servers goes before _plugins,
+    // but clear() must replicate that same sequence explicitly.
     _servers.clear();
     _plugins.clear();
   }
 
 protected:
-  std::vector<pugg::detail::DllHandle> _plugins;
-  std::map<std::string, pugg::detail::Server> _servers;
+  // Declaration order matters: _plugins must outlive _servers so that Driver
+  // vtables (which live in the DLLs) remain valid during Server/Driver destruction.
+  std::vector<detail::DllHandle> _plugins;
+  std::map<std::string, detail::Server> _servers;
 };
 
 } // namespace pugg

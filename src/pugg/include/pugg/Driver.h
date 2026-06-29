@@ -8,25 +8,14 @@ class Driver
 {
 public:
   Driver(std::string server_name, std::string name, int version)
-      : _name(name), _server_name(server_name), _version(version)
+      : _name(std::move(name)), _server_name(std::move(server_name)), _version(version)
   {
   }
-  virtual ~Driver()
-  {
-  }
+  virtual ~Driver() = default;
 
-  std::string server_name() const
-  {
-    return _server_name;
-  }
-  std::string name() const
-  {
-    return _name;
-  }
-  int version() const
-  {
-    return _version;
-  }
+  [[nodiscard]] const std::string &server_name() const { return _server_name; }
+  [[nodiscard]] const std::string &name() const { return _name; }
+  [[nodiscard]] int version() const { return _version; }
 
 private:
   std::string _name;
