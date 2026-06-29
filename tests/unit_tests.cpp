@@ -102,6 +102,23 @@ TEST_CASE("add_server overwrites a previously registered server", "[kernel][serv
 
 // ── Kernel::add_driver ───────────────────────────────────────────────────────
 
+TEST_CASE("add_driver raw-pointer overload accepts and takes ownership", "[kernel][driver][compat]")
+{
+  pugg::Kernel kernel;
+  kernel.add_server<Widget>();
+  REQUIRE(kernel.add_driver(new RedWidgetDriver()));
+  auto v = kernel.get_all_drivers<WidgetDriver>(Widget::server_name());
+  CHECK(v.size() == 1);
+}
+
+TEST_CASE("add_driver raw-pointer overload deletes driver on failure", "[kernel][driver][compat]")
+{
+  // No server registered: add_driver must return false and delete the driver.
+  // Running under ASan or Valgrind will catch a leak if deletion doesn't happen.
+  pugg::Kernel kernel;
+  CHECK_FALSE(kernel.add_driver(new RedWidgetDriver()));
+}
+
 TEST_CASE("add_driver rejects null pointer", "[kernel][driver]")
 {
   pugg::Kernel kernel;

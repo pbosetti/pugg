@@ -56,6 +56,12 @@ public:
     return true;
   }
 
+  // Raw-pointer overload for backwards compatibility: takes ownership of driver.
+  [[nodiscard]] bool add_driver(Driver *driver)
+  {
+    return add_driver(std::unique_ptr<Driver>(driver));
+  }
+
   template <class DriverType>
   [[nodiscard]] DriverType *get_driver(const std::string &server_name, const std::string &name)
   {
