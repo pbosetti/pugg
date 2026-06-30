@@ -1,8 +1,10 @@
-# Pugg 1.0.4
+# Pugg
 
 A lightweight, header-only C++17 framework for loading classes from shared libraries (.so/.dll) at runtime using an object-oriented plugin architecture.
 
 [![CI](https://github.com/pbosetti/pugg/actions/workflows/cmake.yml/badge.svg)](https://github.com/pbosetti/pugg/actions/workflows/cmake.yml)
+
+> This is a fork of <tuncb/pugg> with some bug fixes, improvements and modernization.
 
 ## Credits
 
