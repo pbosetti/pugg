@@ -33,5 +33,5 @@ add_dependencies(pugg_integration_tests PangeaAnimals PanthalassaAnimals)
 
 include(CTest)
 include(Catch)
-catch_discover_tests(pugg_unit_tests)
-catch_discover_tests(pugg_integration_tests)
+catch_discover_tests(pugg_unit_tests TEST_PREFIX "pugg_unit_tests::")
+catch_discover_tests(pugg_integration_tests TEST_PREFIX "pugg_integration_tests::")
