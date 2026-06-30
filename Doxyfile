@@ -1,0 +1,17 @@
+PROJECT_NAME           = "Pugg"
+PROJECT_BRIEF           = "A lightweight, header-only C++17 plugin framework"
+OUTPUT_DIRECTORY        = docs
+INPUT                   = src/pugg/include README.md
+RECURSIVE               = YES
+USE_MDFILE_AS_MAINPAGE  = README.md
+FILE_PATTERNS           = *.h *.hpp *.md
+EXTRACT_ALL             = YES
+EXTRACT_PRIVATE         = NO
+EXTRACT_STATIC          = NO
+GENERATE_HTML           = YES
+GENERATE_LATEX          = NO
+GENERATE_TREEVIEW       = YES
+SORT_MEMBER_DOCS        = NO
+QUIET                   = YES
+WARN_IF_UNDOCUMENTED    = YES
+WARN_NO_PARAMDOC        = YES
