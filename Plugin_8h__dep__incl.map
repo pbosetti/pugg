@@ -1,0 +1,5 @@
+<map id="src/pugg/include/pugg/Plugin.h" name="src/pugg/include/pugg/Plugin.h">
+<area shape="rect" id="Node000001" title="Cross&#45;platform dynamic library loading utilities used to load plugins." alt="" coords="5,5,169,45"/>
+<area shape="rect" id="Node000002" href="$Kernel_8h.html" title="The pugg::Kernel class, the central registry that loads plugins and owns drivers." alt="" coords="5,93,169,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="90,59,90,93,85,93,85,59"/>
+</map>
